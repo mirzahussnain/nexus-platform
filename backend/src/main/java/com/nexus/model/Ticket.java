@@ -1,4 +1,4 @@
-package com.propguard.model;
+package com.nexus.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;

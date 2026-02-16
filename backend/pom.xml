@@ -8,11 +8,11 @@
 		<version>3.5.10</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.propguard</groupId>
-	<artifactId>propguard</artifactId>
+	<groupId>com.nexus</groupId>
+	<artifactId>nexus-backend</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>PropGuard</name>
-	<description>ProGuard KTP Project</description>
+	<name>Nexus Core</name>
+	<description>The secure tenant platform for Nehemiah Housing</description>
 	<url/>
 	<licenses>
 		<license/>

@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+@layer base {
+    :root {
+        /* --- LIGHT MODE DEFAULTS --- */
+        --color-background: 248 250 252;
+        /* Slate-50 */
+        --color-surface: 255 255 255;
+        /* White */
+        --color-text-primary: 15 23 42;
+        /* Slate-900 */
+        --color-text-secondary: 100 116 139;
+        /* Slate-500 */
+        --color-border: 226 232 240;
+        /* Slate-200 */
+
+        /* BRAND COLORS (Light) */
+        --color-primary: 30 58 138;
+        /* Blue-900 */
+        --color-secondary: 59 130 246;
+        /* Blue-500 */
+        --color-danger: 239 68 68;
+        /* Red-500 */
+    }
+
+    .dark {
+        /* --- DARK MODE OVERRIDES --- */
+        --color-background: 15 23 42;
+        /* Slate-900 (Main BG) */
+        --color-surface: 30 41 59;
+        /* Slate-800 (Cards) */
+        --color-text-primary: 241 245 249;
+        /* Slate-100 */
+        --color-text-secondary: 148 163 184;
+        /* Slate-400 */
+        --color-border: 51 65 85;
+        /* Slate-700 */
+
+        /* BRAND COLORS (Dark Adjustments for readability) */
+        --color-primary: 96 165 250;
+        /* Blue-400 (Lighter for dark mode) */
+        --color-secondary: 59 130 246;
+        /* Blue-500 */
+        --color-danger: 248 113 113;
+        /* Red-400 */
+    }
+}

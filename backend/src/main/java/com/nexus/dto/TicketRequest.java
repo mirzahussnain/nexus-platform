@@ -1,4 +1,4 @@
-package com.propguard.dto;
+package com.nexus.dto;
 
 import lombok.Data;
 

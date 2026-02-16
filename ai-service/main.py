@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import spacy
 import subprocess
@@ -13,6 +14,14 @@ except OSError:
     nlp = spacy.load("en_core_web_sm")
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Allows ALL origins (Phone, Web, Postman)
+    allow_credentials=True,
+    allow_methods=["*"],  # Allows ALL methods (POST, GET, OPTIONS)
+    allow_headers=["*"],  # Allows ALL headers
+)
 
 # Input format (DTO)
 class TicketText(BaseModel):

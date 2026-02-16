@@ -1,4 +1,4 @@
-package com.propguard.model;
+package com.nexus.model;
 
 import jakarta.persistence.*;
 import lombok.Data;

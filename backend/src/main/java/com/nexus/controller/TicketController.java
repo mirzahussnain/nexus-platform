@@ -1,16 +1,16 @@
-package com.propguard.controller;
+package com.nexus.controller;
 
-import com.propguard.dto.TicketRequest;
-import com.propguard.model.Tenant;
-import com.propguard.model.Ticket;
-import com.propguard.repository.TenantRepository;
-import com.propguard.repository.TicketRepository;
+import com.nexus.dto.TicketRequest;
+import com.nexus.model.Tenant;
+import com.nexus.model.Ticket;
+import com.nexus.repository.TenantRepository;
+import com.nexus.repository.TicketRepository;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/tickets")
+@RequestMapping("/tickets")
 @CrossOrigin(origins = "*") // Allow React Native/Web to access this
 public class TicketController {
 

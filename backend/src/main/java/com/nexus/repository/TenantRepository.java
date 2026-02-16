@@ -1,6 +1,6 @@
-package com.propguard.repository;
+package com.nexus.repository;
 
-import com.propguard.model.Tenant;
+import com.nexus.model.Tenant;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface TenantRepository extends JpaRepository<Tenant,Long> {

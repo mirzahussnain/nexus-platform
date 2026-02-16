@@ -1,6 +1,6 @@
-package com.propguard.repository;
+package com.nexus.repository;
 
-import com.propguard.model.Ticket;
+import com.nexus.model.Ticket;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

@@ -1,7 +1,7 @@
-package com.propguard.config;
+package com.nexus.config;
 
-import com.propguard.model.Tenant;
-import com.propguard.repository.TenantRepository;
+import com.nexus.model.Tenant;
+import com.nexus.repository.TenantRepository;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
