@@ -6,7 +6,7 @@
 @layer base {
     :root {
         /* --- LIGHT MODE DEFAULTS --- */
-        --color-background: 248 250 252;
+        --color-background: 255 255 255;
         /* Slate-50 */
         --color-surface: 255 255 255;
         /* White */

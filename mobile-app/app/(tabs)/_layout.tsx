@@ -1,44 +1,23 @@
 import { Tabs } from 'expo-router';
-import TabBar from '@/components/ui/TabBar';
-import { Ionicons } from '@expo/vector-icons';
-import { cssInterop } from 'nativewind';
+import TabBar from '@/components/ui/TabBar'; // Import your custom component
 
-cssInterop(Ionicons, {
-    className: {
-        target: 'style',
-        nativeStyleToProp: { color: true },
-    },
-});
-
-const TabLayout = () => {
+export default function TabLayout() {
     return (
-        <Tabs tabBar={props => <TabBar {...props} />}>
-            {/* TAB 1: HOME */}
-            <Tabs.Screen
-                name="index" // This points to app/(tabs)/index.tsx
-                options={{
-                    title: 'Home',
+        <Tabs
+            tabBar={props => <TabBar {...props} />}
+            screenOptions={{ headerShown: false, animation: "shift" }}
+        >
+            {/* 1. HOME: Dashboard */}
+            <Tabs.Screen name="index" options={{ title: 'Home' }} />
 
-                }}
-            />
-            {/* TAB 2: HISTORY */}
-            <Tabs.Screen
-                name="history" // This points to app/(tabs)/history.tsx
-                options={{
-                    title: 'History',
+            {/* 2. SERVICES: The "Business" Tab (Rent & Tickets) */}
+            <Tabs.Screen name="services" options={{ title: 'Services' }} />
 
-                }}
-            />
-            {/* TAB 3: PROFILE */}
-            <Tabs.Screen
-                name="profile" // This points to app/(tabs)/profile.tsx
-                options={{
-                    title: 'Profile',
-                }}
-            />
+            {/* 3. SMART HOME: The "Innovation" Tab (IoT) */}
+            <Tabs.Screen name="smart-home" options={{ title: 'Smart Home' }} />
+
+            {/* 4. COMMUNITY: The "Social" Tab */}
+            <Tabs.Screen name="community" options={{ title: 'Community' }} />
         </Tabs>
-
     );
 }
-
-export default TabLayout

@@ -1,52 +1,67 @@
-import { Ionicons } from "@expo/vector-icons";
-import { PlatformPressable } from "@react-navigation/elements";
+import { Pressable, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { TabBarButtonProps } from "@/interfaces/prop-types";
-import Animated, { interpolate, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
-import { useEffect } from "react";
-
-const TabBarButton = ({ route, href, isFocused, onPress, onLongPress, label, options }: TabBarButtonProps) => {
+export default function TabBarButton({
+    onPress,
+    onLongPress,
+    isFocused,
+    routeName,
+    label
+}: any) {
+    // 0 = Inactive, 1 = Active
     const scale = useSharedValue(0);
 
     useEffect(() => {
-        scale.value = withSpring(typeof isFocused === 'boolean' ? (isFocused ? 1 : 0) : isFocused, { duration: 350 })
-    }, [scale, isFocused])
+        scale.value = withSpring(isFocused ? 1 : 0, { duration: 350 });
+    }, [scale, isFocused]);
+
+    const animatedIconStyle = useAnimatedStyle(() => {
+        const scaleValue = interpolate(scale.value, [0, 1], [1, 1.1]); // Slight pop
+        const top = interpolate(scale.value, [0, 1], [0, -2]); // Slight lift
+        return {
+            transform: [{ scale: scaleValue }],
+            top
+        };
+    });
 
     const animatedTextStyle = useAnimatedStyle(() => {
-        const opacity = interpolate(scale.value, [0, 1], [1, 0])
-        return {
-            opacity: opacity
-        }
-    })
-    const animatedIconStyle = useAnimatedStyle(() => {
-        const scaleValue = interpolate(scale.value, [0, 1], [1, 1.2])
-        const top = interpolate(scale.value, [0, 1], [0, 9]);
-        return {
-            transform: [{
-                scale: scaleValue
-            }],
-            top
-        }
-    })
+        // Text stays visible but maybe moves slightly
+        const opacity = interpolate(scale.value, [0, 1], [0.6, 1]); // Gray -> White
+        return { opacity };
+    });
+
+    // ICON MAPPING (Easy to change)
+    const icons: any = {
+        index: "home-variant",
+        services: "briefcase-variant-outline",
+        "smart-home": "lightning-bolt-outline",
+        community: "account-group-outline"
+    };
+
     return (
-        <PlatformPressable
-            key={route.key}
-            href={href}
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={options.tabBarButtonTestID}
+        <Pressable
             onPress={onPress}
             onLongPress={onLongPress}
-            className='flex-1 items-center justify-center gap-2'
+            className="flex-1 items-center justify-center gap-1"
         >
-            <Animated.View style={animatedIconStyle} >
-                <Ionicons name={route.name === 'index' ? 'home' : route.name === 'history' ? 'time' : 'person'} size={26} className={isFocused ? "text-white" : "text-nexus-primary"} />
+            <Animated.View style={animatedIconStyle}>
+                <MaterialCommunityIcons
+                    name={icons[routeName] || "circle"}
+                    size={26}
+                    // CRITICAL: White when active (on blue pill), Navy when inactive (on white bar)
+                    color={isFocused ? "#ffffff" : "#1e3a8a"}
+                />
             </Animated.View>
-            <Animated.Text style={[animatedTextStyle, { fontSize: 12 }]} className={`duration-1000 ${isFocused ? 'text-white' : 'text-nexus-primary'}`}>
+
+            <Animated.Text
+                style={[animatedTextStyle, { fontSize: 10, fontWeight: '700' }]}
+                // CRITICAL: Same logic for text color
+                className={isFocused ? "text-white" : "text-slate-500"}
+            >
                 {label}
             </Animated.Text>
-        </PlatformPressable>
+        </Pressable>
     );
 }
-
-export default TabBarButton

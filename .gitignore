@@ -30,3 +30,4 @@ web-build/
 # --- Secrets (NEVER COMMIT THESE) ---
 secrets.properties
 application-local.properties
+.env*

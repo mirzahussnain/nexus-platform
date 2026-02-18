@@ -1,19 +1,23 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel
-import spacy
-import subprocess
-import sys
+from core.config import load_config
+from routes.analyze import router as analyze_router
+from core.loggin import setup_logger
 
-# Load the English language model
-try:
-    nlp = spacy.load("en_core_web_sm")
-except OSError:
-    print("Downloading language model for the first time...")
-    subprocess.check_call([sys.executable, "-m", "spacy", "download", "en_core_web_sm"])
-    nlp = spacy.load("en_core_web_sm")
+# 1. Define the Lifespan
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    print("Initializing NLP and Urgency Config...")
+    app.state.config = load_config()
+    app.state.logger = setup_logger()
+    
+    yield  # The app runs here
+    
+    print("Cleaning up resources...")
+    app.state.config.clear()
 
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -23,46 +27,8 @@ app.add_middleware(
     allow_headers=["*"],  # Allows ALL headers
 )
 
-# Input format (DTO)
-class TicketText(BaseModel):
-    description: str
+app.include_router(analyze_router)
 
-# Our "Knowledge Base" of urgent words
-HIGH_URGENCY_KEYWORDS = ["leak", "burst", "fire", "smoke", "flood", "gas", "explode", "spark"]
-MEDIUM_URGENCY_KEYWORDS = ["mold", "damp", "heating", "boiler", "hot water", "lock", "window"]
-
-@app.post("/analyze")
-def analyze_urgency(ticket: TicketText):
-    # 1. AI Processing: Normalize text (lowercase, remove punctuation)
-    doc = nlp(ticket.description.lower())
-    
-    # 2. Lemma matching (better than simple string matching)
-    # "leaking" -> "leak", "flooded" -> "flood"
-    tokens = [token.lemma_ for token in doc]
-    
-    urgency = "LOW" # Default
-    score = 0
-    
-    # 3. The Scoring Logic
-    # Check for HIGH urgency words
-    if any(word in tokens for word in HIGH_URGENCY_KEYWORDS):
-        urgency = "HIGH"
-        score = 100
-    # Check for MEDIUM urgency words
-    elif any(word in tokens for word in MEDIUM_URGENCY_KEYWORDS):
-        urgency = "MEDIUM"
-        score = 50
-    
-    # 4. Extract Key Nouns (What is broken?)
-    # e.g., "The kitchen boiler is broken" -> ["kitchen", "boiler"]
-    keywords = [chunk.text for chunk in doc.noun_chunks]
-
-    return {
-        "urgency": urgency,
-        "score": score,
-        "keywords": keywords,
-        "analysis": f"Detected {urgency} priority based on keywords: {tokens}"
-    }
 
 @app.get("/")
 def health_check():
