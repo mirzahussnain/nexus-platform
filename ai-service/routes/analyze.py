@@ -52,7 +52,5 @@ async def analyze(request: Request, ticket: TicketText):
         "category": category,
         "confidence": confidence,
         "recommended_action": action,
-        "keywords": nouns,
-        "matched_terms": urgency_terms + category_terms,
         "explanation": explanation
     }

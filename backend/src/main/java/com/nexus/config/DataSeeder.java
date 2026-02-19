@@ -16,6 +16,7 @@ public class DataSeeder {
             if (repository.count() == 0) {
                 Tenant t = new Tenant();
                 t.setName("John Doe");
+                t.setPassword_hash("$2a$12$i/OWsvSv7LqyHozQ5zHuSOIQny1f7fhg4UDbSKwiau/GytvFufaKi");
                 t.setEmail("john@example.com");
                 repository.save(t);
                 System.out.println("✅ Dummy Tenant Created: ID " + t.getId());

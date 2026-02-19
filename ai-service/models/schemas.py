@@ -10,6 +10,5 @@ class AIResponse(BaseModel):
     category: str
     confidence: float
     recommended_action: str
-    keywords: List[str]
-    matched_terms: List[str]
     explanation: List[str]
+

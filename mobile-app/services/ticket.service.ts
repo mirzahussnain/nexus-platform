@@ -1,19 +1,32 @@
-import { aiService, backendService } from "./api";
+import { backendService } from "./api";
 
-export const analyzeTicket = async (description: string) => {
-
+export const createTicket = async (description: string) => {
     try {
-        const response = await aiService.post('/analyze', { description });
+        const response = await backendService.post('/tickets', { description }, {
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
         return response.data;
     } catch (error) {
-        console.error("AI Service Error:", error);
+        console.error("Backend Error:", error);
         throw error;
     }
 };
 
-export const createTicket = async (ticketData: any) => {
+export const getTicketById = async (id: number) => {
     try {
-        const response = await backendService.post('/tickets', ticketData);
+        const response = await backendService.get(`/tickets/${id}`);
+        return response.data;
+    } catch (error) {
+        console.error("Backend Error:", error);
+        throw error;
+    }
+};
+
+export const getTenantTickets = async (tenantId: number) => {
+    try {
+        const response = await backendService.get(`/tickets/tenant/${tenantId}`);
         return response.data;
     } catch (error) {
         console.error("Backend Error:", error);

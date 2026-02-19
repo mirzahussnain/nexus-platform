@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity, ScrollView, Switch, Image, Alert } from '
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
+import { useAuth } from '@/context/AuthContext';
 
 export default function ProfileScreen() {
     const router = useRouter();
@@ -11,6 +12,29 @@ export default function ProfileScreen() {
     const [faceIdEnabled, setFaceIdEnabled] = useState(true);
     const [darkMode, setDarkMode] = useState(false);
     const [notifications, setNotifications] = useState(true);
+
+    const { signOut, lock, user } = useAuth();
+
+    const handleSignOut = async () => {
+        Alert.alert(
+            'Sign Out',
+            'This will clear your saved session. You\'ll need to log in with your password next time.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Sign Out',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            await signOut();
+                        } catch (error) {
+                            console.error('Sign Out Error:', error);
+                        }
+                    },
+                },
+            ]
+        );
+    };
 
     return (
         <View className="flex-1 bg-gray-50">
@@ -35,7 +59,7 @@ export default function ProfileScreen() {
                             <View className="relative">
                                 <View className="w-16 h-16 bg-slate-200 rounded-full items-center justify-center overflow-hidden border-2 border-white shadow-sm">
                                     {/* Placeholder Image or Initials */}
-                                    <Text className="text-2xl font-bold text-slate-400">SJ</Text>
+                                    <Text className="text-2xl font-bold text-slate-400">{user?.name ? user.name.split(' ').map((n: string) => n[0]).join('') : '??'}</Text>
                                 </View>
                                 <View className="absolute bottom-0 right-0 bg-green-500 w-5 h-5 rounded-full border-2 border-white items-center justify-center">
                                     <MaterialCommunityIcons name="check" size={12} color="white" />
@@ -44,8 +68,8 @@ export default function ProfileScreen() {
 
                             {/* Text Info */}
                             <View>
-                                <Text className="text-lg font-bold text-slate-900">Sarah Jenkins</Text>
-                                <Text className="text-slate-500 text-xs mb-1">Tenant ID: #882910</Text>
+                                <Text className="text-lg font-bold text-slate-900">{user?.name ?? 'Unknown User'}</Text>
+                                <Text className="text-slate-500 text-xs mb-1">Tenant ID: #{user?.tenantNumber ?? '------'}</Text>
                                 <View className="flex-row items-center gap-1">
                                     <MaterialCommunityIcons name="shield-check" size={14} color="#10b981" />
                                     <Text className="text-emerald-500 text-xs font-bold">Verified Tenant</Text>
@@ -152,15 +176,36 @@ export default function ProfileScreen() {
                     {/* --- 6. SUPPORT & ACCOUNT SECTION --- */}
                     <Text className="text-slate-500 font-bold text-xs uppercase mb-3 ml-4 tracking-wider">Support & Account</Text>
                     <View className="bg-white rounded-[32px] border border-slate-100 overflow-hidden mb-8">
+                        {/* Lock App */}
                         <TouchableOpacity
-                            onPress={() => Alert.alert("Signing Out...")}
+                            onPress={lock}
+                            className="p-5 flex-row items-center justify-between border-b border-slate-50"
+                        >
+                            <View className="flex-row items-center gap-3">
+                                <View className="w-8 h-8 bg-amber-50 rounded-full items-center justify-center">
+                                    <MaterialCommunityIcons name="lock-outline" size={18} color="#f59e0b" />
+                                </View>
+                                <View>
+                                    <Text className="font-semibold text-slate-700 text-base">Lock App</Text>
+                                    <Text className="text-slate-400 text-xs">Biometric unlock stays active</Text>
+                                </View>
+                            </View>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color="#cbd5e1" />
+                        </TouchableOpacity>
+
+                        {/* Sign Out */}
+                        <TouchableOpacity
+                            onPress={() => handleSignOut()}
                             className="p-5 flex-row items-center justify-between"
                         >
                             <View className="flex-row items-center gap-3">
                                 <View className="w-8 h-8 bg-red-50 rounded-full items-center justify-center">
                                     <MaterialCommunityIcons name="logout" size={18} color="#ef4444" />
                                 </View>
-                                <Text className="font-semibold text-red-600 text-base">Sign Out</Text>
+                                <View>
+                                    <Text className="font-semibold text-red-600 text-base">Sign Out</Text>
+                                    <Text className="text-slate-400 text-xs">Clears saved session entirely</Text>
+                                </View>
                             </View>
                         </TouchableOpacity>
                     </View>

@@ -1,8 +1,9 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { useRouter, useSegments } from 'expo-router';
+import { AppState } from 'react-native';
 import { storage } from '../utils/storage';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { AuthContextType } from '@/types/context-type';
+import { loginUser } from '@/services/auth.service';
 
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -21,10 +22,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 setIsLoading(true);
                 const token = await storage.get('userToken');
                 const profile = await storage.get('userProfile');
+                const biometricsEnabled = await storage.get('biometricsEnabled');
 
-                if (token && profile) {
+                if (token && profile && !biometricsEnabled) {
+                    // No biometrics — auto-restore session
                     setUser(profile);
                 }
+                // If biometrics enabled, leave user null → login screen → biometric prompt
             } catch (e) {
                 console.error("Auth Check Failed", e);
             } finally {
@@ -36,33 +40,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // SIGN IN LOGIC
     const signIn = async (email: string, pass: string) => {
-        if (email.includes('@nexus.com')) {
-            const fakeUser = { name: 'Tenant', email };
 
-            await storage.save('userToken', 'mock-jwt-token');
-            await storage.save('userProfile', fakeUser);
+        const data = await loginUser(email, pass);
+        if (!data) throw new Error('Login Failed');
+        const profile = { tenantId: data.tenantId, name: data.name, tenantNumber: data.tenantNumber };
 
-            setUser(fakeUser);
-        } else {
-            throw new Error('Invalid Credentials');
-        }
+        await storage.save('userToken', data.token);
+        await storage.save('userProfile', profile);
+
+        setUser(profile);
     };
 
-    // BIOMETRIC LOGIC
+    // BIOMETRIC LOGIC — actual biometric scan is handled by useBiometrics hook,
+    // this only restores the saved session after a successful scan.
     const biometricLogin = async () => {
-        const result = await LocalAuthentication.authenticateAsync();
-        if (result.success) {
-            const profile = await storage.get('userProfile');
-            if (profile) setUser(profile);
-        } else {
-            throw new Error('Biometric Failed');
+        const token = await storage.get('userToken');
+        const profile = await storage.get('userProfile');
+
+        if (!token || !profile) {
+            throw new Error('No saved session. Please log in with your password first.');
         }
+
+        setUser(profile);
     };
 
-    // SIGN OUT LOGIC
+    // LOCK — clears session in memory, keeps credentials in storage for biometric re-login
+    const lock = () => {
+        setUser(null);
+    };
+
+    // FULL SIGN OUT — clears everything, forces password login next time
     const signOut = async () => {
         await storage.remove('userToken');
         await storage.remove('userProfile');
+        await storage.remove('biometricsEnabled');
         setUser(null);
     };
 
@@ -79,8 +90,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
     }, [user, isLoading, segments]);
 
+    // AUTO-LOCK ON APP BACKGROUND
+    const appState = useRef(AppState.currentState);
+
+    useEffect(() => {
+        const sub = AppState.addEventListener('change', (nextState) => {
+            if (appState.current === 'active' && nextState === 'background') {
+                lock();
+            }
+            appState.current = nextState;
+        });
+        return () => sub.remove();
+    }, []);
+
     return (
-        <AuthContext.Provider value={{ user, isLoading, signIn, signOut, biometricLogin }}>
+        <AuthContext.Provider value={{ user, isLoading, signIn, signOut, lock, biometricLogin }}>
             {children}
         </AuthContext.Provider>
     );

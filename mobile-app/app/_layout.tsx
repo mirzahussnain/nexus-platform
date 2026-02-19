@@ -71,7 +71,7 @@ const AppLayout = () => {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="(auth)" options={{ headerShown: false }} />
         <Stack.Screen name="profile" options={{ headerShown: false }} />
-        <Stack.Screen name="ticket/[id]" options={{ title: 'Ticket Details' }} />
+        <Stack.Screen name="ticket/[id]" options={{ title: 'Ticket Details', headerShown: false }} />
         <Stack.Screen name="ticket/create" options={{ title: 'Create Ticket', headerShown: false }} />
       </Stack>
 

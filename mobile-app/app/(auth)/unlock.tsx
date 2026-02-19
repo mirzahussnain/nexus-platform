@@ -4,9 +4,11 @@ import { useRouter } from 'expo-router';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/context/AuthContext';
 
 export default function BiometricUnlockScreen() {
     const router = useRouter();
+    const { biometricLogin } = useAuth();
     const [isAuthenticating, setIsAuthenticating] = useState(false);
     const [status, setStatus] = useState("Locked");
 
@@ -39,10 +41,8 @@ export default function BiometricUnlockScreen() {
 
             if (result.success) {
                 setStatus("Unlocked");
-                // SUCCESS -> Go to Dashboard
-                setTimeout(() => {
-                    router.replace('/(tabs)');
-                }, 500); // Small delay for "Success" animation visual
+                // Restore session from storage → navigation guard handles redirect to /(tabs)
+                await biometricLogin();
             } else {
                 setStatus("Failed");
                 setIsAuthenticating(false);

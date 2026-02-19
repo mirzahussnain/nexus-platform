@@ -16,6 +16,7 @@ export default function LoginScreen() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [loginError, setLoginError] = useState('');
 
 
 
@@ -27,12 +28,13 @@ export default function LoginScreen() {
         }
 
         setIsSubmitting(true);
+        setLoginError('');
 
         try {
             await signIn(email, password);
-            setIsSubmitting(false);
-        } catch (error) {
-            console.error('Login failed:', error);
+        } catch (error: any) {
+            setLoginError(error.message || 'Login failed. Please try again.');
+        } finally {
             setIsSubmitting(false);
         }
     };
@@ -74,6 +76,13 @@ export default function LoginScreen() {
                     <Text className="text-slate-400 mt-2">Sign in to your Nexus account</Text>
                 </View>
 
+                {/* ERROR MESSAGE */}
+                {loginError ? (
+                    <View className="bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-3 mb-4">
+                        <Text className="text-red-400 text-sm text-center font-medium">{loginError}</Text>
+                    </View>
+                ) : null}
+
                 {/* INPUT FIELDS */}
                 <View className="gap-y-4 mb-6">
                     <View>
@@ -85,7 +94,7 @@ export default function LoginScreen() {
                             autoCapitalize="none"
                             keyboardType="email-address"
                             value={email}
-                            onChangeText={setEmail}
+                            onChangeText={(text) => { setEmail(text); setLoginError(''); }}
                         />
                     </View>
 
@@ -97,7 +106,7 @@ export default function LoginScreen() {
                             placeholderTextColor="#64748b"
                             secureTextEntry
                             value={password}
-                            onChangeText={setPassword}
+                            onChangeText={(text) => { setPassword(text); setLoginError(''); }}
                         />
                     </View>
                 </View>

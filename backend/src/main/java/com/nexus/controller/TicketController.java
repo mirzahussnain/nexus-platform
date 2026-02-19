@@ -1,10 +1,15 @@
 package com.nexus.controller;
 
-import com.nexus.dto.TicketRequest;
-import com.nexus.model.Tenant;
+import com.nexus.dto.ticket.TicketRequest;
+
+import com.nexus.dto.ticket.TicketResponse;
+import com.nexus.mapper.TicketMapper;
 import com.nexus.model.Ticket;
-import com.nexus.repository.TenantRepository;
 import com.nexus.repository.TicketRepository;
+import com.nexus.service.TicketService;
+
+import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -12,44 +17,39 @@ import java.util.List;
 @RestController
 @RequestMapping("/tickets")
 @CrossOrigin(origins = "*") // Allow React Native/Web to access this
+@RequiredArgsConstructor
 public class TicketController {
 
+    private final TicketService ticketService;
     private final TicketRepository ticketRepository;
-    private final TenantRepository tenantRepository;
-    public TicketController(TicketRepository ticketRepository,TenantRepository tenantRepository){
-        this.ticketRepository=ticketRepository;
-        this.tenantRepository=tenantRepository;
-    }
-
-    // 1. GET ALL (For Admin Dashboard)
-    // URL: http://localhost:8080/api/tickets
 
     @GetMapping
-    public List<Ticket> getAllTickets() {
-        return ticketRepository.findAll();
+    public List<TicketResponse> getAllTickets() {
+        return ticketRepository.findAll()
+                .stream().map(TicketMapper::toResponse).toList();
     }
 
-    // 2. GET MINE (For Mobile App)
-    // URL: http://localhost:8080/api/tickets/tenant/1
     @GetMapping("/tenant/{tenantId}")
-    public List<Ticket> getTicketsByTenant(@PathVariable Long tenantId) {
-        return ticketRepository.findByTenantId(tenantId);
+    public List<TicketResponse> getTenantTickets(@PathVariable Long tenantId) {
+        return ticketRepository.findByTenantId(tenantId)
+                .stream().map(TicketMapper::toResponse).toList();
     }
 
-    // 3. CREATE (For Mobile App)
-    // URL: http://localhost:8080/api/tickets
     @PostMapping
-    public Ticket createTicket(@RequestBody TicketRequest request) {
-        // Find the Tenant from the ID passed in the JSON
-        Tenant tenant = tenantRepository.findById(request.getTenantId())
-                .orElseThrow(() -> new RuntimeException("Tenant not found"));
-        Ticket ticket = new Ticket();
-        ticket.setDescription(request.getDescription());
-        ticket.setUrgency(request.getUrgency());
-        ticket.setStatus("OPEN");
-        ticket.setTenant(tenant);
-        return ticketRepository.save(ticket);
+    public TicketResponse create(
+            HttpServletRequest req,
+            @RequestBody TicketRequest request) {
+
+        Long tenantId = (Long) req.getAttribute("tenantId");
+
+        return TicketMapper.toResponse(
+                ticketService.createTicket(request, tenantId));
     }
 
-
+    @GetMapping("/{id}")
+    public TicketResponse getById(@PathVariable Long id) {
+        Ticket ticket = ticketRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Ticket not found"));
+        return TicketMapper.toResponse(ticket);
+    }
 }

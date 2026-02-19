@@ -1,4 +1,4 @@
-package com.nexus.dto;
+package com.nexus.dto.ticket;
 
 import lombok.Data;
 
