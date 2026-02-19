@@ -1,50 +1,190 @@
-# Welcome to your Expo app 👋
+# Mobile App — Nexus Tenant Experience
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+> React Native · Expo SDK 52 · NativeWind · Expo Router
 
-## Get started
+---
 
-1. Install dependencies
+## Overview
 
-   ```bash
-   npm install
-   ```
+The Nexus mobile app is the **primary tenant interface** — a cross-platform iOS/Android application that provides secure login, AI-powered issue reporting, real-time ticket tracking, and a foundation for future features including IoT monitoring and a multi-lingual NLP chatbot (Phase 3).
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## Tech Stack
 
-In the output, you'll find options to open the app in a
+| Technology | Version | Purpose |
+|-----------|---------|---------|
+| React Native | 0.76+ | Cross-platform mobile framework |
+| Expo | SDK 52 | Managed workflow, dev tooling |
+| Expo Router | 4.x | File-based routing (tabs + stacks) |
+| NativeWind | 4.x | Tailwind CSS for React Native |
+| TypeScript | 5.x | Type safety |
+| Axios | 1.x | HTTP client with interceptors |
+| expo-linear-gradient | Latest | Gradient cards and hero sections |
+| expo-local-authentication | Latest | Biometric auth (Face ID / Fingerprint) |
+| react-native-safe-area-context | Latest | Safe area handling |
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+---
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+## Screens
 
-## Get a fresh project
+| Screen | Route | Description |
+|--------|-------|-------------|
+| **Login** | `(auth)/login` | Email + password authentication |
+| **Unlock** | `(auth)/unlock` | Biometric re-authentication after lock |
+| **Home** | `(tabs)/index` | Dashboard with quick actions and stats |
+| **Services** | `(tabs)/services` | Segmented view: Repairs (tickets) + Bills |
+| **Community** | `(tabs)/community` | Community board (placeholder) |
+| **Smart Home** | `(tabs)/smart-home` | IoT monitoring (Phase 4 placeholder) |
+| **Profile** | `profile` | Tenant info, settings, sign out |
+| **Create Ticket** | `ticket/create` | AI-powered issue reporting form |
+| **Ticket Detail** | `ticket/[id]` | Full ticket view with AI analysis |
 
-When you're ready, run:
+---
 
-```bash
-npm run reset-project
+## Component Architecture
+
+### Reusable Ticket Components (`components/ticket/`)
+
+| Component | Props | Description |
+|-----------|-------|-------------|
+| `SectionCard` | `icon`, `title`, `children` | Titled card wrapper with icon header |
+| `ConfidenceBar` | `confidence` (0–1) | Progress bar with dynamic colour + label |
+| `RecommendedActionCard` | `action` | Blue gradient card with lightning icon |
+| `AIReasoningSection` | `explanationJson`, `showStepCount?` | Collapsible accordion, self-managed state |
+| `UrgencyHeroCard` | `urgency`, `category`, `createdAt`, `score?` | Gradient hero with priority and metadata |
+
+### UI Components (`components/ui/`)
+
+| Component | Description |
+|-----------|-------------|
+| `TabBar` | Custom animated bottom tab bar |
+| `TabBarButton` | Individual tab button with animation |
+| `NexusSplash` | Branded splash / loading screen |
+| `SlidingDot` | Animated dot indicator |
+
+### Service Components (`components/services/`)
+
+| Component | Description |
+|-----------|-------------|
+| `TicketsView` | Live ticket list with pull-to-refresh, Active/Closed sections |
+
+---
+
+## Project Structure
+
+```
+mobile-app/
+├── app/                              # File-based routing (Expo Router)
+│   ├── _layout.tsx                   # Root layout (Stack navigator)
+│   ├── globals.css                   # Global Tailwind styles
+│   ├── (auth)/
+│   │   ├── _layout.tsx               # Auth stack layout
+│   │   ├── login.tsx                 # Login screen
+│   │   └── unlock.tsx                # Biometric unlock screen
+│   ├── (tabs)/
+│   │   ├── _layout.tsx               # Tab navigator layout
+│   │   ├── index.tsx                 # Home dashboard
+│   │   ├── services.tsx              # Repairs + Bills (segmented)
+│   │   ├── community.tsx             # Community board
+│   │   └── smart-home.tsx            # IoT monitoring (Phase 4)
+│   ├── ticket/
+│   │   ├── create.tsx                # AI-powered ticket creation
+│   │   └── [id].tsx                  # Ticket detail screen
+│   └── profile.tsx                   # Tenant profile screen
+├── components/
+│   ├── ticket/                       # Reusable ticket UI components
+│   ├── services/                     # TicketsView (live data list)
+│   └── ui/                           # TabBar, splash, alerts
+├── context/
+│   └── AuthContext.tsx                # Auth state, biometric, session
+├── services/
+│   ├── api.ts                        # Axios instance + JWT interceptor
+│   ├── auth.service.ts               # Login API call
+│   └── ticket.service.ts             # Ticket CRUD API calls
+├── types/
+│   ├── context-type.ts               # Auth context types
+│   └── ticket-type.ts                # Ticket & config interfaces
+└── utils/
+    └── helpers.ts                    # Shared helpers (urgency, category, date)
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+---
 
-## Learn more
+## Authentication Flow
 
-To learn more about developing your project with Expo, look at the following resources:
+```mermaid
+stateDiagram-v2
+    [*] --> CheckToken: App Launch
+    CheckToken --> Login: No token
+    CheckToken --> Unlock: Token exists
+    Login --> Dashboard: JWT received
+    Unlock --> Dashboard: Biometric verified
+    Dashboard --> Unlock: App backgrounded
+    Dashboard --> Login: Sign out
+    Unlock --> Login: 3 failed attempts
+```
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+**Security features:**
+- JWT token stored in secure local storage
+- Biometric unlock (Face ID / Fingerprint) via `expo-local-authentication`
+- Auto-lock on app background with `AppState` listener
+- Token attached to all API calls via Axios interceptor
 
-## Join the community
+---
 
-Join our community of developers creating universal apps.
+## Running Locally
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+```bash
+# Prerequisites: Node.js 18+, Expo Go on physical device
+
+# 1. Install dependencies
+npm install
+
+# 2. Start dev server
+npx expo start
+
+# 3. Scan QR code with Expo Go
+#    Or press 'a' for Android emulator / 'i' for iOS simulator
+```
+
+### Required Services
+
+The app requires both the backend and AI service to be running:
+
+| Service | URL | Required For |
+|---------|-----|-------------|
+| Backend API | `http://<your-ip>:8080` | All operations |
+| AI Service | `http://<your-ip>:8000` | Ticket analysis (via backend) |
+
+---
+
+## Design System
+
+### Colour Palette
+
+| Token | Hex | Usage |
+|-------|-----|-------|
+| Primary | `#3b82f6` | Buttons, links, active states |
+| Success | `#10b981` | Confirmed, low urgency |
+| Warning | `#f59e0b` | Medium urgency, caution |
+| Danger | `#ef4444` | High urgency, errors |
+| Surface | `#f8fafc` | Background |
+| Card | `#ffffff` | Card backgrounds |
+| Text | `#0f172a` | Primary text |
+| Muted | `#94a3b8` | Secondary text, labels |
+
+### Typography
+- **Font:** System default (SF Pro on iOS, Roboto on Android)
+- **Scale:** 10px (micro labels) → 24px (headers)
+- **Weight:** Regular, Semibold, Bold
+
+---
+
+## Evolution Path
+
+| Phase | Enhancement |
+|-------|------------|
+| **Phase 2** | Rent & billing views, payment history |
+| **Phase 3** | Multi-lingual interface, push notifications |
+| **Phase 4** | IoT sensor dashboard, smart home controls |
