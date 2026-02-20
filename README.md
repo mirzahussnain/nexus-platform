@@ -5,7 +5,7 @@
 **Intelligent Property Management Platform**
 
 A full-stack platform I designed and built from the ground up — combining a mobile app,
-AI-driven ticket classification, and a microservices backend — to demonstrate
+AI-driven ticket classification, and a modular monolith backend — to demonstrate
 how digital innovation can transform social housing operations.
 
 [![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.x-6DB33F?logo=springboot&logoColor=white)](https://spring.io/projects/spring-boot)
@@ -37,7 +37,7 @@ Nexus is a proof-of-concept platform I **designed, architected, and developed in
 - **AI/NLP-powered ticket classification** — tenants describe issues in plain English; the system auto-classifies urgency, category, and recommends actions
 - **Secure JWT authentication** with BCrypt password hashing and biometric unlock
 - **Real-time repair tracking** — tenants view, create, and monitor maintenance tickets
-- **Microservice architecture** — independently deployable backend, AI service, and mobile client
+- **Modular monolith architecture** — domain-based package structure (auth, tenant, ticket) with enforced service-layer boundaries, designed for future microservice extraction
 - **Web staff portal** — planned React.js dashboard for staff and contractor management
 
 > **Why I built this:** To demonstrate my ability to lead a project end-to-end — from system architecture and technology selection through to working code — while solving a real-world problem: reducing arrears, preventing housing-related illness, and giving tenants inclusive, intelligent access to modern housing services.
@@ -98,6 +98,87 @@ Nexus is a proof-of-concept platform I **designed, architected, and developed in
 │  └───────────────────────┘      └────────────────────────────┘   │
 └──────────────────────────────────────────────────────────────────┘
 ```
+> **Current Architecture:** The Modular Monolith design allows for future extraction without client refactoring.
+
+## 🔮 Future Architecture (Microservices)
+
+*Planned evolution for Phase 3+ (Post-MVP)*
+
+```
+                ┌───────────────┐                  ┌───────────────┐
+                │   Mobile App  │                  │   Web Portal  │
+                └───────┬───────┘                  └───────┬───────┘
+                        │                                  │
+                        └───────────────┬──────────────────┘
+                                        │ HTTPS
+                                        ▼
+                            ┌───────────────────────┐
+                            │      API Gateway      │
+                            └───────────┬───────────┘
+                                        │
+      ┌──────────────┬──────────────────┼──────────────────┬──────────────┐
+      │              │                  │                  │              │
+      ▼              ▼                  ▼                  ▼              ▼
+┌───────────┐  ┌────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐
+│Auth Service│  │Ticket Service│ │Tenant Service│  │Notification│  │IoT Service│
+└─────┬──────┘  └─────┬──────┘  └──────┬──────┘  └──────┬─────┘  └─────┬─────┘
+      │               │                │                │              │
+      │         ┌─────┴─────┐    ┌─────┴─────┐          │        ┌─────┴─────┐
+      │         │Redis Cache│    │Redis Cache│          │        │TimescaleDB│
+      │         └───────────┘    └───────────┘          │        └───────────┘
+      │               │                │                │              │
+      ▼               ▼                ▼                ▼              ▼
+┌────────────────────────────────────────────────────────────────────────────┐
+│                               PostgreSQL DB                                │
+└────────────────────────────────────────────────────────────────────────────┘
+       ▲
+       │
+┌──────┴──────┐
+│  AI Service │
+└─────────────┘
+```
+
+### End-State Service Roles (Phase 4)
+
+| Service | Technology | Responsibility |
+|---------|-----------|----------------|
+| **API Gateway** | Spring Cloud Gateway | Entry point, routing, rate limiting, SSL termination |
+| **Auth Service** | Spring Security + JWT | Identity provider, issues JWTs, manages sessions |
+| **Ticket Service** | Spring Boot | Core logic for maintenance requests, workflow state machine |
+| **Tenant Service** | Spring Boot | Manage tenant profiles, leases, and property data |
+| **Notification** | Spring Boot + WebSockets | Push notifications (FCM), emails, and in-app alerts |
+| **IoT Service** | Spring Boot + Timescale | Ingests high-frequency sensor data, detects anomalies |
+| **AI Service** | Python (FastAPI) | NLP analysis, risk prediction, image recognition |
+| **Redis** | Redis | Caching hot data (properties) and session management |
+| **TimescaleDB** | PostgreSQL Extension | Optimized storage for time-series sensor data |
+
+### Future Scalability Strategy
+1.  **Horizontal Scaling**: Stateless services (Backend/AI) deployed as Docker containers in Kubernetes (K8s).
+2.  **Caching Layer (Redis)**:
+    - **Session Store**: Offload JWT allow-list and NextAuth sessions.
+    - **API Cache**: Cache frequent read-heavy endpoints (e.g. `GetPropertyTypes`).
+3.  **IoT Integration**:
+    - **Ingestion**: Async processing via RabbitMQ/Kafka for sensor data.
+    - **Storage**: TimescaleDB for efficient time-series queries.
+
+---
+
+### 🖥️ Web Portal Roles (Phase 2)
+
+| Role | Responsibilities | Key Features |
+|------|-----------------|--------------|
+| **Admin** | System Oversight | • Manage Users & Permissions<br>• View System Analytics<br>• Audit Logs |
+| **Staff** | Housing Operations | • Create & Manage Tickets<br>• Assign Contractors<br>• View Tenant History |
+| **Contractor**| Field Maintenance | • View Assigned Jobs<br>• Update Job Status<br>• Upload Completion Proof |
+
+### 🔌 Future IoT Endpoints
+
+| Domain | Method | Endpoint | Description |
+|--------|--------|----------|-------------|
+| **IoT** | POST | `/iot/data` | Ingest sensor telemetry (Temp, Humidity) |
+| **IoT** | GET | `/iot/predict-risk` | AI Risk Assessment (e.g., Mould Prediction) |
+
+---
 
 > 📐 Full architecture diagrams with Mermaid: **[docs/architecture.md](docs/architecture.md)**
 
@@ -122,7 +203,7 @@ Nexus is a proof-of-concept platform I **designed, architected, and developed in
 
 | Principle | Rationale |
 |-----------|----------|
-| **Modular Microservices** | Each service (Backend, AI, Mobile) is independently deployable, testable, and scalable |
+| **Modular Monolith → Microservices** | Backend uses domain-based packages with service-layer boundaries (1) enabling independent development per domain and (2) enforcing clean separation for future microservice extraction. The AI service already runs independently as a Python microservice |
 | **Explainable AI over Black-Box ML** | Rule-based MVP provides transparent, auditable decisions — ML evolves incrementally as training data accumulates |
 | **Security-First Architecture** | JWT, BCrypt, biometric, tenant isolation, and DTO patterns embedded from Day 1 — not bolted on later |
 | **Tenant Accessibility First** | Plain-English issue reporting, intuitive mobile UI, biometric unlock — designed for inclusivity |
@@ -195,14 +276,28 @@ Tenant Input                "My boiler broke and there's no heating"
 
 ---
 
+## 🧪 Global Testing Strategy
+
+To ensure stability across the microservice boundaries, we enforce testing at every layer of the stack.
+
+| Layer | Frameworks | Strategy |
+|-------|------------|----------|
+| **Backend** | JUnit 5, Mockito, Testcontainers | Unit tests for domain services (e.g. `TicketService`). Integration tests for JPA repositories spinning up real PostgreSQL via Docker |
+| **AI Service** | PyTest | Assertions on FastAPI endpoints, mocked tokenisation, and confidence score boundary testing |
+| **Mobile App** | Jest, RNTL | Unit tests for core helpers (`urgencyColor()`), component rendering tests mapping to mocked `AuthContext` |
+| **Web Portal** | Vitest, React Testing Library | Component rendering and user event simulation (e.g. `shadcn` form submissions), mocked `NextAuth` sessions |
+| **E2E (Phase 3)** | Playwright, Detox | Cross-system smoke tests simulating a tenant logging an issue on Mobile, and a Staff member viewing it on the Web Portal |
+
+---
+
 ## 🗺 Roadmap
 
 | Phase | Timeline | Deliverables | Status |
 |-------|----------|-------------|--------|
 | **1 — Foundation** | Months 1–6 | Mobile app, Backend API, AI classification (rule-based), JWT auth | ✅ MVP |
-| **2 — Expansion** | Months 7–11 | Web staff portal, contractor management, HomeMaster ERP integration, rent dashboard | 🔜 Next |
-| **3 — Intelligence** | Months 12–16 | ML classifiers, multi-lingual NLP, API gateway, ISO 27001 certification | 📋 Planned |
-| **4 — IoT & Scale** | Months 17–22 | IoT sensors, predictive maintenance, data warehouse, production Kubernetes | 📋 Planned |
+| **2 — Expansion** | Months 7–11 | Web staff portal (UI + Live Data), contractor management, rent dashboard | 🔜 Next / In Progress |
+| **3 — Intelligence** | Months 12–16 | ML classifiers, multi-lingual NLP, Redis caching, microservices extraction | 📋 Planned |
+| **4 — IoT & Scale** | Months 17–22 | IoT sensors, predictive maintenance, TimescaleDB, production Kubernetes | 📋 Planned |
 | **5 — Knowledge Transfer** | Months 22–28 | Operational manuals, staff training, handover, academic publications | 📋 Planned |
 
 > 📅 Full Gantt chart and infrastructure specs: **[docs/deployment-strategy.md](docs/deployment-strategy.md)**
@@ -263,14 +358,12 @@ nexus-platform/
 ├── backend/                          # Spring Boot REST API (Java 21)
 │   └── src/main/
 │       ├── java/com/nexus/
-│       │   ├── controller/               # REST endpoints
-│       │   ├── service/                  # Business logic + AI integration
-│       │   ├── model/                    # JPA entities
-│       │   ├── dto/                      # Request/Response DTOs
-│       │   ├── mapper/                   # Entity → DTO transformation
-│       │   ├── utility/                  # JWT filter & utilities
-│       │   └── config/                   # Security, CORS, seeding
-│       └── resources/db/migration/       # Flyway versioned migrations
+│       │   ├── auth/                    # Auth domain (controller, service, DTOs, JWT)
+│       │   ├── tenant/                  # Tenant domain (model, repository, service)
+│       │   ├── ticket/                  # Ticket domain (controller, service, models, DTOs)
+│       │   ├── integration/ai/          # AI service HTTP client
+│       │   └── shared/                  # Cross-cutting (config, exceptions)
+│       └── resources/db/migration/      # Flyway versioned migrations
 │
 ├── ai-service/                       # FastAPI NLP microservice (Python 3.11)
 │   ├── services/                     # NLP engine, classifier, action engine

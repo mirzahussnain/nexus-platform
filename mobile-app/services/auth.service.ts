@@ -18,3 +18,13 @@ export const loginUser = async (email: string, password: string): Promise<LoginR
         throw new Error('Unable to connect. Please try again.');
     }
 };
+
+// Validate current token
+export const validateSession = async (): Promise<boolean> => {
+    try {
+        await backendService.get('/tickets'); // accessing a protected route
+        return true;
+    } catch (e) {
+        return false;
+    }
+};

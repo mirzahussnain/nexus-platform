@@ -181,10 +181,28 @@ The app requires both the backend and AI service to be running:
 
 ---
 
-## Evolution Path
+## 🧪 Testing Strategy
 
-| Phase | Enhancement |
-|-------|------------|
-| **Phase 2** | Rent & billing views, payment history |
-| **Phase 3** | Multi-lingual interface, push notifications |
-| **Phase 4** | IoT sensor dashboard, smart home controls |
+- **Frameworks:** Jest + React Native Testing Library (RNTL)
+- **Unit Testing:** Helper functions (like urgency colour mapping and date formatting) and state reducers.
+- **Component Testing:** Rendering views with mock data, simulating user interactions (e.g. pressing the biometric unlock button), and asserting UI state changes.
+- **Context Mocking:** Auth contexts are mocked to test protected route redirects independently of the actual backend.
+- **E2E Testing (Phase 3):** Detox will be used to run automated UI tests on actual iOS Simulator / Android Emulator builds.
+
+---
+
+## 🔮 Future Roadmap
+
+| Phase | Feature | Description |
+|-------|---------|-------------|
+| **Phase 2 (Next)** | **Rent & Bills** | Payment history, arrears view, PDF downloads |
+| **Phase 3** | **Multi-Lingual** | In-app language switching (English/Spanish/Polish) |
+| **Phase 4** | **IoT Smart Home** | Real-time sensor monitoring (Temp/Humidity) |
+
+### 🔌 Planned Mobile Endpoints
+
+| Domain | Method | Endpoint | Purpose |
+|--------|--------|----------|---------|
+| **IoT** | GET | `/iot/property/{id}` | View home sensor data (Phase 4) |
+| **Auth** | POST | `/auth/refresh` | Silent token refresh |
+| **Comms** | POST | `/messages` | Chat with Staff/AI (Phase 3) |

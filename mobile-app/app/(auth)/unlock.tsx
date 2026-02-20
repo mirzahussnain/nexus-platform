@@ -48,10 +48,16 @@ export default function BiometricUnlockScreen() {
                 setIsAuthenticating(false);
             }
 
-        } catch (e) {
-            console.error(e);
+        } catch (e: any) {
+            console.error("Biometric Restore Error:", e);
             setStatus("Error");
             setIsAuthenticating(false);
+
+            Alert.alert(
+                "Authentication Required",
+                e.message || "Your session has expired. Please log in again.",
+                [{ text: "OK", onPress: () => router.replace('/(auth)/login') }]
+            );
         }
     };
 

@@ -6,10 +6,14 @@
 
 ## Overview
 
-The backend is the **central orchestrator** of the Nexus platform. It manages tenant authentication, ticket lifecycle, AI service integration, and will expand to include contractor management, rent dashboards, and HomeMaster ERP integration in future phases.
+The backend follows a **modular monolith** architecture — a single deployable Spring Boot application with domain-based internal structure. Two key reasons for this approach:
+
+1. **Domain isolation** — each business capability (`auth/`, `tenant/`, `ticket/`) owns its own controllers, services, repositories, and DTOs within its package
+2. **Enforced service-layer boundaries** — cross-domain access goes through service classes (e.g. `TicketService` → `TenantService`), not direct repository access
+
+> **Future architecture:** Microservices — the modular boundaries are designed so each domain package can be extracted into an independently deployable service with minimal refactoring.
 
 ---
-
 ## Tech Stack
 
 | Technology | Version | Purpose |
@@ -58,42 +62,40 @@ The backend is the **central orchestrator** of the Nexus platform. It manages te
 ```
 backend/
 ├── src/main/java/com/nexus/
-│   ├── NexusApplication.java          # Spring Boot entry point
-│   ├── config/
-│   │   ├── SecurityConfig.java        # BCrypt password encoder bean
-│   │   ├── RestConfig.java            # CORS configuration
-│   │   └── DataSeeder.java            # Dev data seeding
-│   ├── controller/
-│   │   ├── AuthController.java        # POST /auth/login
-│   │   ├── TicketController.java      # Ticket CRUD endpoints
-│   │   ├── ContractorController.java  # (Phase 2)
-│   │   └── StaffController.java       # (Phase 2)
-│   ├── dto/
-│   │   ├── auth/                      # LoginRequest, LoginResponse
-│   │   ├── ticket/                    # TicketRequest, TicketResponse
-│   │   └── AIResponse.java           # AI service response mapping
-│   ├── mapper/
-│   │   └── TicketMapper.java          # Entity → DTO transformation
-│   ├── model/
-│   │   ├── Tenant.java                # Tenant entity
-│   │   ├── Ticket.java                # Ticket entity
-│   │   └── TicketAnalysis.java        # AI analysis entity
-│   ├── repository/
-│   │   ├── TenantRepository.java      # JPA repository
-│   │   ├── TicketRepository.java      # JPA repository
-│   │   └── AnalysisRepository.java    # JPA repository
-│   ├── service/
-│   │   ├── AuthService.java           # Login logic
-│   │   └── TicketService.java         # Ticket creation + AI integration
-│   ├── integration/ai/
-│   │   └── AIClient.java              # HTTP client for AI service
-│   └── utility/
-│       ├── JwtUtil.java               # Token generation & validation
-│       └── JwtFilter.java             # Request interceptor
+│   ├── NexusApplication.java              # Spring Boot entry point
+│   │
+│   ├── auth/                              # 🔐 Auth Domain
+│   │   ├── controller/AuthController.java # POST /auth/login
+│   │   ├── service/AuthService.java       # Login logic + JWT issuance
+│   │   ├── dto/                           # LoginRequest, LoginResponse
+│   │   └── security/                      # JwtUtil, JwtFilter
+│   │
+│   ├── tenant/                            # 👤 Tenant Domain
+│   │   ├── model/Tenant.java             # Tenant entity
+│   │   ├── repository/TenantRepository.java
+│   │   └── service/TenantService.java     # Tenant business logic
+│   │
+│   ├── ticket/                            # 🎫 Ticket Domain
+│   │   ├── controller/TicketController.java # Ticket CRUD endpoints
+│   │   ├── service/TicketService.java       # Ticket creation + AI integration
+│   │   ├── model/                           # Ticket, TicketAnalysis entities
+│   │   ├── repository/                      # TicketRepository, AnalysisRepository
+│   │   ├── mapper/TicketMapper.java         # Entity → DTO transformation
+│   │   └── dto/                             # TicketRequest, TicketResponse
+│   │
+│   ├── integration/ai/                    # 🤖 External Service Integration
+│   │   ├── AIClient.java                  # HTTP client for AI service
+│   │   └── AIResponse.java               # AI service response mapping
+│   │
+│   └── shared/                            # 🔧 Cross-cutting Concerns
+│       ├── config/                        # SecurityConfig, RestConfig, DataSeeder
+│       ├── controller/HomeController.java # GET / health check
+│       └── exception/                     # GlobalExceptionHandler, InvalidCredentialsException
+│
 └── src/main/resources/
     ├── application.properties             # App config
     └── db/migration/
-        └── V1__create_initial_schema.sql   # Flyway: tenants, tickets, analysis tables
+        └── V1__create_initial_schema.sql  # Flyway: tenants, tickets, analysis tables
 ```
 
 ---
@@ -167,9 +169,59 @@ erDiagram
 
 | Decision | Rationale |
 |----------|-----------|
+| **Modular Monolith** | (1) Domain isolation — each business capability has its own package with controllers, services, repos, DTOs; (2) Enforced service-layer boundaries — cross-domain access via service classes, not direct repository access. Future target: microservices extraction |
+| **Service-layer boundaries** | Cross-domain access goes through service classes (e.g. `TenantService`) rather than direct repository access, enforcing domain encapsulation |
 | **DTO mapper pattern** | Prevents circular reference issues (Ticket ↔ Analysis) and decouples API contract from JPA entities |
 | **Custom JWT filter** | Lightweight alternative to Spring Security's full filter chain; extracts `tenantId` per request |
 | **AI as external service** | Separate scaling, independent deployment, polyglot (Python for NLP) |
 | **BCrypt cost factor 10** | Balances security with login latency for mobile clients |
 | **PostgreSQL `GENERATED` columns** | Database-generated ticket numbers ensure uniqueness under concurrency |
 | **Flyway migrations** | Version-controlled schema changes (`V1__create_initial_schema.sql`); auto-applied at startup, ensuring consistent database state across environments |
+
+---
+
+## 🧪 Testing Strategy
+
+The backend relies on isolated unit testing for business logic and containerised integration testing for the data/web layer.
+
+- **Unit Testing (JUnit 5 + Mockito):** 
+  - Validates `com.nexus.*.service` classes.
+  - Dependencies (Repositories, AI Client) are tightly mocked.
+- **Integration Testing (Testcontainers):** 
+  - Tests `com.nexus.*.repository` and `com.nexus.*.controller`.
+  - Spins up an ephemeral PostgreSQL Docker container to ensure exact database parity without relying on an H2 in-memory DB.
+  - Validates full HTTP request/response lifecycles, including JWT filter verification.
+
+---
+
+## 🚀 Future Roadmap
+
+### 1. Planned API Endpoints
+
+| Domain | Phase | Method | Endpoint | Purpose |
+|--------|-------|--------|----------|---------|
+| **Auth** | **Phase 2** | GET | `/auth/me` | Refresh/Verify current session |
+| **Ticket** | **Phase 2** | PATCH | `/tickets/{id}/status` | Update Ticket Status |
+| **Ticket** | **Phase 2** | PATCH | `/tickets/{id}/assign` | Assign contractor |
+| **IoT** | **Phase 4** | POST | `/iot/data` | Ingest sensor data (Temp, Humidity) |
+| **IoT** | **Phase 4** | GET | `/iot/property/{id}` | Get property sensor history |
+
+### 2. Redis Caching Strategy
+
+To improve scalability in Phase 3, **Redis** will be introduced to cache:
+
+- **Reference Data**: `GetAllProperties`, `GetTicketCategories` (TTL: 1 hour)
+- **Session Data**: Valid JWT jti (Token ID) allow-list (TTL: Token Expiry)
+- **Rate Limiting**: Request counts per IP (via Bucket4j)
+
+### 3. Microservices Extraction Plan
+
+The current **Modular Monolith** is designed for easy extraction:
+
+1.  **Extract AI Service**: Already separate (Python).
+2.  **Extract Tenant Service**:
+    - Move `com.nexus.tenant` package to new Spring Boot project.
+    - Update `TicketService` to call `TenantService` via REST/gRPC instead of internal method calls.
+3.  **Extract Ticket Service**:
+    - Move `com.nexus.ticket` to new project.
+    - Implement Event Bus (RabbitMQ/Kafka) for asynchronous updates between Ticket and Tenant services.

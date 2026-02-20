@@ -54,6 +54,30 @@ Analyses a text description and returns urgency, category, confidence, score, re
 }
 ```
 
+
+### `GET /analyze-iot` (Planned)
+
+Analyses IoT sensor data for risk prediction (e.g., Mould).
+
+**Request:**
+```json
+{
+ "propertyId": 12,
+ "temperature": 32,
+ "humidity": 85,
+ "timestamp": "2024-03-20T10:00:00Z"
+}
+```
+
+**Response:**
+```json
+{
+ "riskLevel": "HIGH",
+ "issue": "Possible mould growth",
+ "action": "Inspect ventilation"
+}
+```
+
 ### `GET /`
 
 Health check endpoint.
@@ -170,10 +194,19 @@ uvicorn main:app --reload --port 8000
 
 ---
 
-## Evolution Path
+## 🧪 Testing Strategy
 
-| Phase | Enhancement |
-|-------|------------|
-| **Phase 2** | Synonym expansion (WordNet), negation handling, expanded categories |
-| **Phase 3** | ML classifier (TF-IDF → DistilBERT), multi-lingual support, A/B testing |
-| **Phase 4** | IoT sensor anomaly detection, predictive maintenance models |
+- **Framework:** PyTest
+- **Unit Testing:** Individual components (`classifier.py`, `nlp_engine.py`) are tested against edge cases (e.g. spelling errors, empty strings, missing keywords).
+- **Endpoint Testing:** `TestClient` from FastAPI is used to hit `/analyze` and assert the schema of the JSON response, verifying HTTP 200 codes and correct Pydantic validation on malformed requests.
+- **Model Regression (Phase 3):** When ML models are introduced, testing will include a dedicated regression suite asserting F1-scores against a golden dataset of 5,000 historical tickets.
+
+---
+
+## 🚀 Evolution Path
+
+| Phase | Core Theme | Enhancement |
+|-------|------------|------------|
+| **Phase 2** | **Expansion** | Synonym expansion (WordNet), negation handling ("no heat" != "fixed heat"), expanded categories. |
+| **Phase 3** | **Intelligence**| ML classifier (HuggingFace/DistilBERT) replacing rules, multi-lingual support, A/B testing pipeline. |
+| **Phase 4** | **IoT & Scale** | IoT sensor anomaly detection (timeseries forecasting), predictive maintenance models. |

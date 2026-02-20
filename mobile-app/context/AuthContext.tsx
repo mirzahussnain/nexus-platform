@@ -3,7 +3,7 @@ import { useRouter, useSegments } from 'expo-router';
 import { AppState } from 'react-native';
 import { storage } from '../utils/storage';
 import { AuthContextType } from '@/types/context-type';
-import { loginUser } from '@/services/auth.service';
+import { loginUser, validateSession } from '@/services/auth.service';
 
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,6 +61,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             throw new Error('No saved session. Please log in with your password first.');
         }
 
+        // 1. Verify token is still valid on the server
+        const isValid = await validateSession();
+        if (!isValid) {
+            // Token expired -> Clear storage and force login
+            await signOut();
+            throw new Error('Session expired. Please log in again.');
+        }
+
+        // 2. Restore session if valid
         setUser(profile);
     };
 
