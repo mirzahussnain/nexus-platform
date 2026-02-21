@@ -58,84 +58,85 @@ Nexus is a proof-of-concept platform I **designed, architected, and developed in
 
 ---
 
-## 🏗 Architecture
+## 🏗 Current MVP Architecture
 
+The MVP consists of the core active services: the mobile client, backend API, AI classification service, and the primary database.
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        MA["📱 Mobile App<br/>React Native · Expo"]
+    end
+
+    subgraph Services["Service Layer"]
+        BE["☕ Backend API<br/>Spring Boot 3 · Java 21"]
+        AI["🤖 AI Service<br/>FastAPI · Python 3.11"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["🐘 PostgreSQL<br/>Primary Database"]
+    end
+
+    MA -->|JWT + HTTPS| BE
+    BE -->|HTTP| AI
+    BE -->|JDBC| PG
+
+    style MA fill:#61DAFB,color:#000
+    style BE fill:#6DB33F,color:#fff
+    style AI fill:#009688,color:#fff
+    style PG fill:#4169E1,color:#fff
 ```
-┌──────────────────────────────────────────────────────────────────┐
-│                        CLIENT LAYER                              │
-│                                                                  │
-│  ┌───────────────────────┐      ┌────────────────────────────┐   │
-│  │ 📱 Mobile App         │      │ 🖥️ Web Portal (Phase 2)    │   │
-│  │ React Native · Expo   │      │ React.js · TypeScript      │   │
-│  │ iOS + Android         │      │ Staff + Contractor views   │   │
-│  └──────────┬────────────┘      └─────────────┬──────────────┘   │
-│             └──────────────┬──────────────────┘                  │
-│                            ▼                                     │
-│                 Axios / Fetch + JWT Bearer                       │
-└────────────────────────────┬─────────────────────────────────────┘
-                             │ HTTPS / REST
-                             ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                       SERVICE LAYER                              │
-│                                                                  │
-│  ┌───────────────────────┐      ┌────────────────────────────┐   │
-│  │ ☕ Backend API         │ ───▶ │ 🤖 AI Service              │   │
-│  │ Spring Boot 3         │      │ FastAPI · Python · spaCy   │   │
-│  │ Java 21 · JPA         │      │ NLP · Classification       │   │
-│  │ JWT · BCrypt           │      │ Rule-Based → ML (evolving) │   │
-│  └──────────┬────────────┘      └────────────────────────────┘   │
-│             │                                                    │
-└─────────────┼────────────────────────────────────────────────────┘
-              │ JDBC
-              ▼
-┌──────────────────────────────────────────────────────────────────┐
-│                        DATA LAYER                                │
-│                                                                  │
-│  ┌───────────────────────┐      ┌────────────────────────────┐   │
-│  │ 🐘 PostgreSQL 16      │      │ 📊 TimescaleDB (Phase 4)   │   │
-│  │ Tenants · Tickets     │      │ IoT sensor time-series     │   │
-│  │ Analyses · Invoices   │      │ Predictive maintenance     │   │
-│  └───────────────────────┘      └────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────────┘
-```
-> **Current Architecture:** The Modular Monolith design allows for future extraction without client refactoring.
+
+> **Current Architecture:** The Modular Monolith design allows for future extraction without client refactoring. The MVP System Flow (Interaction Diagram) can be found in the [System Architecture](docs/architecture.md) documentation.
 
 ## 🔮 Future Architecture (Microservices)
 
 *Planned evolution for Phase 3+ (Post-MVP)*
 
-```
-                ┌───────────────┐                  ┌───────────────┐
-                │   Mobile App  │                  │   Web Portal  │
-                └───────┬───────┘                  └───────┬───────┘
-                        │                                  │
-                        └───────────────┬──────────────────┘
-                                        │ HTTPS
-                                        ▼
-                            ┌───────────────────────┐
-                            │      API Gateway      │
-                            └───────────┬───────────┘
-                                        │
-      ┌──────────────┬──────────────────┼──────────────────┬──────────────┐
-      │              │                  │                  │              │
-      ▼              ▼                  ▼                  ▼              ▼
-┌───────────┐  ┌────────────┐  ┌─────────────┐  ┌─────────────┐  ┌───────────┐
-│Auth Service│  │Ticket Service│ │Tenant Service│  │Notification│  │IoT Service│
-└─────┬──────┘  └─────┬──────┘  └──────┬──────┘  └──────┬─────┘  └─────┬─────┘
-      │               │                │                │              │
-      │         ┌─────┴─────┐    ┌─────┴─────┐          │        ┌─────┴─────┐
-      │         │Redis Cache│    │Redis Cache│          │        │TimescaleDB│
-      │         └───────────┘    └───────────┘          │        └───────────┘
-      │               │                │                │              │
-      ▼               ▼                ▼                ▼              ▼
-┌────────────────────────────────────────────────────────────────────────────┐
-│                               PostgreSQL DB                                │
-└────────────────────────────────────────────────────────────────────────────┘
-       ▲
-       │
-┌──────┴──────┐
-│  AI Service │
-└─────────────┘
+Nexus follows a target **microservices architecture** with independently deployable services communicating over REST APIs, fronted by clients and an API gateway.
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        MA["📱 Mobile App<br/>React Native · Expo"]
+        WP["🖥️ Web Portal<br/>React.js (Phase 2)"]
+    end
+
+    subgraph Gateway["API Gateway (Phase 3)"]
+        AG["🔀 API Gateway<br/>Spring Cloud Gateway"]
+    end
+
+    subgraph Services["Service Layer"]
+        BE["☕ Backend API<br/>Spring Boot 3 · Java 21"]
+        AI["🤖 AI Service<br/>FastAPI · Python 3.11"]
+        NS["📨 Notification Service<br/>(Phase 3)"]
+        IOT["📡 IoT Ingestion Service<br/>(Phase 4)"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["🐘 PostgreSQL<br/>Primary Database"]
+        RD["⚡ Redis<br/>Session Cache (Phase 2)"]
+        TS["📊 TimescaleDB<br/>IoT Time-Series (Phase 4)"]
+    end
+
+    MA --> BE
+    WP --> AG
+    AG --> BE
+    AG --> AI
+    BE --> PG
+    BE --> AI
+    BE --> NS
+    IOT --> TS
+    IOT --> AI
+
+    style MA fill:#61DAFB,color:#000
+    style WP fill:#61DAFB,color:#000
+    style BE fill:#6DB33F,color:#fff
+    style AI fill:#009688,color:#fff
+    style PG fill:#4169E1,color:#fff
+    style AG fill:#FF6B35,color:#fff
+    style NS fill:#9C27B0,color:#fff
+    style IOT fill:#FF9800,color:#fff
 ```
 
 ### End-State Service Roles (Phase 4)
@@ -248,28 +249,35 @@ Nexus is a proof-of-concept platform I **designed, architected, and developed in
 
 ## 🤖 AI Pipeline
 
-```
-Tenant Input                "My boiler broke and there's no heating"
-      │
-      ▼
-┌─────────────┐
-│  Tokeniser  │──────────▶  ['boiler', 'break', 'heat']
-│  (spaCy)    │              (lemmatised tokens)
-└─────────────┘
-      │
-      ▼
-┌──────────────┐
-│  Classifier  │──────────▶  Urgency: MEDIUM  │  Category: HEATING
-│  (Rules/ML)  │              Score: 50/100    │  Confidence: 0.67
-└──────────────┘
-      │
-      ▼
-┌───────────────┐
-│ Action Engine │──────────▶  "Schedule engineer visit within 24h"
-└───────────────┘
-      │
-      ▼
-   Stored alongside ticket in PostgreSQL
+```mermaid
+flowchart TB
+    subgraph Input
+        TXT["Raw Text Input<br/>'My boiler broke and there's no heating'"]
+    end
+
+    subgraph NLP["NLP Engine (spaCy)"]
+        TOK["Tokenisation"]
+        LEM["Lemmatisation<br/>broke → break"]
+        NC["Noun Chunk Extraction"]
+    end
+
+    subgraph Classification["Classifier"]
+        URG["Urgency Detection<br/>Keyword ↔ Dictionary Match"]
+        CAT["Category Detection<br/>Multi-label Scoring"]
+        CON["Confidence Scoring<br/>matched_tokens / total_tokens"]
+    end
+
+    subgraph Action["Action Engine"]
+        REC["Recommendation<br/>(urgency, category) → action"]
+    end
+
+    TXT --> TOK --> LEM --> NC
+    LEM --> URG & CAT & CON
+    URG & CAT --> REC
+
+    style NLP fill:#009688,color:#fff
+    style Classification fill:#3b82f6,color:#fff
+    style Action fill:#f59e0b,color:#000
 ```
 
 > 🧠 Full pipeline docs: **[docs/ai-roadmap.md](docs/ai-roadmap.md)**

@@ -4,7 +4,7 @@
 
 ---
 
-## High-Level Architecture
+## Future Architecture (Target State)
 
 Nexus follows a **microservices architecture** with three independently deployable services communicating over REST APIs, fronted by a cross-platform mobile client.
 
@@ -63,6 +63,37 @@ graph TB
 
 ## Current MVP Architecture
 
+The MVP consists of the core active services: the mobile client, backend API, AI classification service, and the primary database.
+
+```mermaid
+graph TB
+    subgraph Client["Client Layer"]
+        MA["📱 Mobile App<br/>React Native · Expo"]
+    end
+
+    subgraph Services["Service Layer"]
+        BE["☕ Backend API<br/>Spring Boot 3 · Java 21"]
+        AI["🤖 AI Service<br/>FastAPI · Python 3.11"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["🐘 PostgreSQL<br/>Primary Database"]
+    end
+
+    MA -->|JWT + HTTPS| BE
+    BE -->|HTTP| AI
+    BE -->|JDBC| PG
+
+    style MA fill:#61DAFB,color:#000
+    style BE fill:#6DB33F,color:#fff
+    style AI fill:#009688,color:#fff
+    style PG fill:#4169E1,color:#fff
+```
+
+---
+
+## MVP System Flow (Interaction Diagram)
+
 The MVP implements the core interaction loop: **Tenant → Mobile App → Backend → AI → Response**.
 
 ```mermaid
@@ -77,9 +108,13 @@ sequenceDiagram
     M->>B: POST /tickets {description}
     B->>A: POST /analyze {text}
     
-    Note over A: NLP Pipeline:<br/>1. spaCy tokenisation<br/>2. Lemmatisation<br/>3. Urgency classification<br/>4. Category detection<br/>5. Confidence scoring<br/>6. Action recommendation
-
-    A-->>B: {urgency, category, confidence,<br/>score, action, explanation}
+    alt AI Service is available
+        Note over A: NLP Pipeline:<br/>1. spaCy tokenisation<br/>2. Lemmatisation<br/>3. Urgency classification<br/>4. Category detection<br/>5. Confidence scoring<br/>6. Action recommendation
+        A-->>B: {urgency, category, confidence,<br/>score, action, explanation}
+    else AI Service is down / timeout
+        Note over B: Fallback triggered:<br/>Urgency: LOW<br/>Category: GENERAL<br/>Confidence: 0<br/>Action: Manual review required
+    end
+    
     B->>D: INSERT ticket + analysis
     B-->>M: TicketResponse DTO
     M-->>T: AI analysis result card
