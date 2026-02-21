@@ -69,6 +69,7 @@ The MVP consists of the core active services: the mobile client, backend API, AI
 graph TB
     subgraph Client["Client Layer"]
         MA["📱 Mobile App<br/>React Native · Expo"]
+        WA["🌐 Web Portal<br/>React Native · Expo"]
     end
 
     subgraph Services["Service Layer"]
@@ -81,6 +82,7 @@ graph TB
     end
 
     MA -->|JWT + HTTPS| BE
+    WA -->|NextAuth + HTTPS| BE
     BE -->|HTTP| AI
     BE -->|JDBC| PG
 
