@@ -66,6 +66,7 @@ The MVP consists of the core active services: the mobile client, backend API, AI
 graph TB
     subgraph Client["Client Layer"]
         MA["📱 Mobile App<br/>React Native · Expo"]
+        WA["🌐 Web Portal<br/>React (NextJS) initial Setup"]
     end
 
     subgraph Services["Service Layer"]
@@ -78,6 +79,7 @@ graph TB
     end
 
     MA -->|JWT + HTTPS| BE
+    WA -->|HTTPS| BE
     BE -->|HTTP| AI
     BE -->|JDBC| PG
 
@@ -85,6 +87,7 @@ graph TB
     style BE fill:#6DB33F,color:#fff
     style AI fill:#009688,color:#fff
     style PG fill:#4169E1,color:#fff
+
 ```
 
 > **Current Architecture:** The Modular Monolith design allows for future extraction without client refactoring. The MVP System Flow (Interaction Diagram) can be found in the [System Architecture](docs/architecture.md) documentation.
