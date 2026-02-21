@@ -12,7 +12,7 @@ Nexus follows a **microservices architecture** with three independently deployab
 graph TB
     subgraph Client["Client Layer"]
         MA["📱 Mobile App<br/>React Native · Expo"]
-        WP["🖥️ Web Portal<br/>React.js (Phase 2)"]
+        WP["🖥️ Web Portal<br/>React (Next.JS) - Staff/Contractor/Admin Dashboards,Authentication etc (Phase 2)"]
     end
 
     subgraph Gateway["API Gateway (Phase 3)"]
@@ -69,7 +69,7 @@ The MVP consists of the core active services: the mobile client, backend API, AI
 graph TB
     subgraph Client["Client Layer"]
         MA["📱 Mobile App<br/>React Native · Expo"]
-        WA["🌐 Web Portal<br/>React Native · Expo"]
+        WA["🌐 Web Portal<br/>React (NextJS) initial Setup"]
     end
 
     subgraph Services["Service Layer"]
